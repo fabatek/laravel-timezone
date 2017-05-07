@@ -1,39 +1,90 @@
 <?php namespace Gazugafan\Timezone;
 
-use DateTime;
-use DateTimeZone;
+use Illuminate\Support\Facades\Config;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class Timezone
 {
+	public $getCurrentUsersTimezoneFunction = null;
+
 	/**
-	 * @param integer $timestamp
-	 * @param string $timezone
-	 * @param string $format
+	 * Sets a function to be used to get the current user's timezone--overriding the default behavior of Auth::user()->timezone
 	 *
-	 * @return string
-     */
-	public function convertFromUTC($timestamp, $timezone, $format = 'Y-m-d H:i:s')
+	 * @param $newFunction A new function to call that returns the currently logged in user's timezone. Don't specify or set to NULL to reset to default behavior.
+	 */
+	public function setCurrentUsersTimezoneFunction($newFunction = null)
 	{
-        $date = new DateTime($timestamp, new DateTimeZone('UTC'));
+		$this->getCurrentUsersTimezoneFunction = $newFunction;
+	}
 
-        $date->setTimezone(new DateTimeZone($timezone));
+	/**
+	 * Gets the currently logged in user's timezone as a string, or the application timezone if no user is logged in.
+	 *
+	 * @return string The current user's timezone
+	 */
+	public function getCurrentUsersTimezone()
+	{
+		if ($this->getCurrentUsersTimezoneFunction && is_callable($this->getCurrentUsersTimezoneFunction))
+			return $this->getCurrentUsersTimezoneFunction->__invoke();
 
-        return $date->format($format);
+		if ($user = Auth::user())
+		{
+			if (isset($user->timezone))
+				return $user->timezone;
+		}
+
+		return config('app.timezone');
+	}
+
+	/**
+	 * Creates a Carbon date from a variety of date representations. If a Carbon or DateTime object containing a timezone is passed along with the $timezone parameter, the returned Carbon will be in the $timezone timezone without any adjustments.
+	 *
+	 * @param Carbon|DateTime|string|int|null $date The date to create a Carbon from. Can be essentially anything that can be interpreted as a date, including DateTime, string, timestamp, another Carbon instance, etc. If null, now is assumed.
+	 * @param string $timezone The timezone to create the Carbon instance in. If not specified, the application timezone is assumed.
+	 *
+	 * @return Carbon The interpreted date as a Carbon instance
+	 */
+	public function createCarbon($date = null, $timezone = null)
+	{
+		if (!$timezone) $timezone = config('app.timezone');
+		if (is_integer($date)) $date = date('Y-m-d H:i:s', $date);
+		return new Carbon($date, $timezone);
+	}
+
+	/**
+	 * Converts a date from storage into a Carbon date adjusted to the user's timezone.
+	 *
+	 * @param Carbon|DateTime|string|int $date The date to convert (or now, if not specified). Can be a Carbon, DateTime, string, timestamp, etc.
+	 * @param string $toTimezone If specified, the date will be converted to this timezone. Otherwise, the current user's timezone is assumed.
+	 *
+	 * @return Carbon The converted date
+     */
+	public function convertFromStorage($date = null, $toTimezone = null)
+	{
+		if (!$toTimezone) $toTimezone = $this->getCurrentUsersTimezone();
+		$carbonDate = $this->createCarbon($date);
+
+		$carbonDate->timezone = $toTimezone;
+
+		return $carbonDate;
     }
 
 	/**
-	 * @param integer $timestamp
-	 * @param string $timezone
-	 * @param string $format
+	 * Converts a date from the user's timezone into a Carbon date adjusted for the storage timezone.
 	 *
-	 * @return string
+	 * @param Carbon|DateTime|string|int $date The date to convert (or now, if not specified). Can be a Carbon, DateTime, string, timestamp, etc.
+	 * @param string $fromTimezone If specified, the date will be converted from this timezone. Otherwise, the current user's timezone is assumed.
+	 *
+	 * @return Carbon The converted date
      */
-	public function convertToUTC($timestamp, $timezone, $format = 'Y-m-d H:i:s')
-    {
-    	$date = new DateTime($timestamp, new DateTimeZone($timezone));
+	public function convertToStorage($date = null, $fromTimezone = null)
+	{
+		if (!$fromTimezone) $fromTimezone = $this->getCurrentUsersTimezone();
+		$carbonDate = $this->createCarbon($date, $fromTimezone);
 
-        $date->setTimezone(new DateTimeZone('UTC'));
+		$carbonDate->timezone = config('app.timezone');
 
-        return $date->format($format);
+		return $carbonDate;
     }
 }
