@@ -56,7 +56,7 @@ Auth::user()->timezone
 If you need help coming up with a list of timezones for your users to select from, here's a set of options you could use in a dropdown...
 <details>
 <summary>A whole bunch of options</summary>
-  <p>
+
 ```html
 <option value="America/New_York">America, Eastern</option>
 <option value="America/Chicago">America, Central</option>
@@ -492,7 +492,7 @@ If you need help coming up with a list of timezones for your users to select fro
 <option value="Pacific/Tongatapu">Pacific, Tongatapu (GMT+13:00)</option>
 <option value="Pacific/Kiritimati">Pacific, Kiritimati (GMT+14:00)</option>
 ```
-  </p>
+
 </details>
 
 
