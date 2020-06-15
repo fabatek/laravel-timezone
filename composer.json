@@ -1,5 +1,5 @@
 {
-    "name": "gazugafan/laravel-timezone",
+    "name": "fabatek/laravel-timezone",
     "description": "Date/time timezone storage and retrieval for Laravel 5",
     "keywords": ["laravel", "timezone", "timezones"],
 	"homepage": "https://github.com/gazugafan/laravel-timezone",
@@ -7,7 +7,7 @@
     "require": {
         "php": ">=5.4.0",
         "illuminate/support": ">=4.2",
-        "nesbot/carbon": "^1.22"
+        "nesbot/carbon": "^2.0"
     },
 	"autoload": {
 		"psr-4": {
